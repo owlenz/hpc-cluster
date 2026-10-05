@@ -4,45 +4,40 @@
 
 ## 1.  Copy OS image to `/tmp` on the management node:
 
-<aside>
-💡
-
 use DVD ISO to prevent the confirmation at installation
 
-</aside>
-
-- Using secure copy
+- Using secure copy or rsync
 
     ```bash
-    scp Rocky-8.10-x86_64-dvd1.iso root@10.10.10.1:/tmp
+    scp Rocky-8.10-x86_64-dvd1.iso root@10.10.10.1:/tmp # for secure copy
+    rsync -av Rocky-8.10-x86_64-dvd1.iso root@10.10.10.1:/tmp # for rsync
+
     ```
 
 - Using USB
     1. get the name of the USB partition
 
-        ```jsx
+        ```bash
         lsblk
         ```
 
-
     2. create munt point
 
-    ```jsx
+    ```bash
     	mkdir -p /mnt/usb
     ```
 
     1. mount the usb
 
-        ```jsx
+        ```bash
         sudo mount /dev/sdb1 /mnt/usb
         ```
 
     2. copy the iso
 
-        ```jsx
+        ```bash
         cp /mnt/usb/Rocky-8.10-x86_64-dvd1.iso  /tmp
         ```
-
 
 ## 2. Mount the ISO to `/mnt/iso/rocky8.10` on the Management Node:
 
@@ -51,14 +46,9 @@ mkdir -p /mnt/iso/rocky8.10
 mount -o loop /tmp/Rocky-8.10-x86_64-dvd1.iso /mnt/iso/rocky8.10
 ```
 
-<aside>
-✅
-
 This warning is normal:
 
 > `mount: /mnt/iso/rocky8.10: WARNING: device write-protected, mounted read-only.`
->
-</aside>
 
 ---
 
@@ -96,16 +86,11 @@ echo "xcatmn.cluster.com" | sudo tee /etc/hostname
 
 ---
 
-<aside>
-💡
-
 If you installed xCAT before setting up the hostname, write
 
 ```bash
 chtab key = domain.in site.value=cluster.com
 ```
-
-</aside>
 
 ---
 
@@ -120,7 +105,7 @@ wget https://raw.githubusercontent.com/xcat2/xcat-core/master/xCAT-server/share/
 
 ### 2. Make it executable
 
-```jsx
+```bash
 chmod +x /tmp/go-xcat
 ```
 
@@ -131,16 +116,12 @@ chmod +x /tmp/go-xcat
 **/tmp/go-xcat -x 2.16 install
 ```
 
-<aside>
-📌
-
-Note: change the version of 2.16 to the version you desire. You can find details about the versions here :
+> Note: change the version of 2.16 to the version you desire. You can find details about the versions here :
 
 > [https://xcat-docs.readthedocs.io/en/2.16.5/overview/xcat2_release.html](https://xcat-docs.readthedocs.io/en/2.16.5/overview/xcat2_release.html)
 and
 [https://xcat.org/files/xcat/repos/yum/](https://xcat.org/files/xcat/repos/yum/)
 >
-</aside>
 
 ---
 
@@ -236,7 +217,7 @@ chtab key=system passwd.username=root passwd.password=root
 
 ### Fixing `DHCP` [FAIL]
 
-```jsx
+```bash
 chdef -t network -o 10_10_10_0-255_255_255_0 dynamicrange=10.10.10.20-10.10.10.30
 makedhcp -n
 ```
@@ -391,21 +372,13 @@ sudo cp /usr/share/syslinux/libutil.c32 /tftpboot/
 
 To monitor the progress of the provisioning :
 
-```jsx
+```bash
 xcatprobe osdeploy -n <compute node name>
 ```
 
-<aside>
-💡
-
 Then restart the Compute Node manually and make sure it is set to network boot
 
-</aside>
-
 ---
-
-<aside>
-💡
 
 In case of connecting nodes back to back and having 2 network cards remove the default route of the nic connected back to back:
 
@@ -413,8 +386,6 @@ In case of connecting nodes back to back and having 2 network cards remove the d
 sudo nmcli connection modify enp0s31f6 ipv4.never-default yes
 sudo nmcli connection up enp0s31f6
 ```
-
-</aside>
 
 ---
 
@@ -448,7 +419,6 @@ sudo nmcli connection up enp0s31f6
     createrepo /install/repo/custom_repo
     ```
 
-
 1. Create your repo file on the MN pointing to the repo we just created on the MN:
 
     ```bash
@@ -460,7 +430,6 @@ sudo nmcli connection up enp0s31f6
     gpgcheck=0
     EOF
     ```
-
 
 6. make sure `httpd` is running on the MN and can serve your repo file:
 
@@ -484,15 +453,7 @@ EOF
 chdef -t osimage rocky8.9-x86_64-install-compute synclists=/install/custom.synclist
 ```
 
-<aside>
-✅
-
 Now this repo will be visible to any newly provisioned CNs
-
-</aside>
-
-<aside>
-💡
 
 In case of creating new repos on the MN, we will need to run
 
@@ -501,8 +462,6 @@ updatenode cn1 -F
 ```
 
 to let the CN know that new repos were created and have the repo config file with the new repo link on the MN.
-
-</aside>
 
 ## 7. Create a yum repository file `/etc/yum.repos.d/Rocky-8.9-local.repo` that points to the locally mounted iso image from the above step:
 
@@ -633,13 +592,11 @@ now we can use easybuild on the MN to add any package the CN would need and pull
     sudo dnf install epel-release
     ```
 
-
 1. Create your repo to be used by the CNs:
 
     ```bash
     mkdir -p /install/repo/custom_repo
     ```
-
 
 1. Go to your created repo and populate it with all your needed packages:
 
@@ -653,7 +610,6 @@ now we can use easybuild on the MN to add any package the CN would need and pull
     createrepo /install/repo/custom_repo
     ```
 
-
 1. Create your repo file on the MN pointing to the repo we just created on the MN:
 
     ```bash
@@ -665,7 +621,6 @@ now we can use easybuild on the MN to add any package the CN would need and pull
     gpgcheck=0
     EOF
     ```
-
 
 6. make sure httpd is running on the MN and can serve your repo file:
 
@@ -689,15 +644,7 @@ EOF
 chdef -t osimage rocky8.9-x86_64-install-compute synclists=/install/custom.synclist
 ```
 
-<aside>
-✅
-
 Now this repo will be visible to any newly provisioned CNs
-
-</aside>
-
-<aside>
-💡
 
 In case of creating new repos on the MN, we will need to run
 
@@ -707,273 +654,26 @@ updatenode cn1 -F
 
 to let the CN know that new repos were created and have the repo config file with the new repo link on the MN.
 
-</aside>
-
 ## 4. Updating already created repos and syncing that with already provisioned CNs:
 
 1. Download the new packages you want to add:
 
-    ```bash
-    yumdownloader --destdir=/install/repo/custom_repo sl
-    ```
+```bash
+yumdownloader --destdir=/install/repo/custom_repo sl
+```
 
 2. After adding new RPMs into that repo, run:
 
-    ```bash
-    createrepo --update /install/repo/custom_repo
-    ```
+```bash
+createrepo --update /install/repo/custom_repo
+```
 
-    to update the already created repo
+to update the already created repo
 
-3.  On the CN run:
-
-    ```bash
-    dnf clean all
-    dnf makecache
-    dnf install sl
-    ```
-
-
-# OS Image backup
-
-### Metadata backup
+3. On the CN run:
 
 ```bash
-# Export single osimage definition
-lsdef -t osimage <osimage_name> -z > /root/osimage_<osimage_name>.def
+dnf clean all
+dnf makecache
+dnf install sl
 ```
-
-**Step 2**: Identify file locations
-
-```bash
-lsdef -t osimage rocky8.9-x86_64-install-compute -i rootimgdir,osdistroname,pkgdir,otherpkgdir
-```
-
-**step 3**
-
-create backup dir
-
-```bash
-mkdir -p rocky8.9-x86_64-install-compute
-```
-
-copy files into the backup dir
-
-```bash
-cp -a /install/rocky8.9/x86_64 /backup/osimages/rocky8.9-x86_64-install-compute/
-cp -a /install/repo/custom_repo /backup/osimages/rocky8.9-x86_64-install-compute/
-cp -a /install/post/otherpkgs/rocky8.9/x86_64 /backup/osimages/rocky8.9-x86_64-install-compute/
-```
-
-copy iso
-
-```bash
-cp /tmp/Rocky-8.9-x86_64-dvd1.iso /backup/osimages/
-```
-
-**step 4**
-
-compress
-
-```bash
-tar -czf /backup/osimages/rocky8.9-x86_64-install-compute.tar.gz -C /backup/osimages rocky8.9-x86_64-install-compute
-```
-
-### Restore later
-
-1. Extract repos back:
-
-    ```
-    tar -xzf /backup/osimages/rocky8.9-x86_64-install-compute.tar.gz -C /install/
-    ```
-
-2. re-import definition
-
-    ```bash
-    mkdef -z < /root/rocky8.9-x86_64-install-compute.def
-    ```
-
-3. rebuild repo metadata (if needed)
-
-    ```bash
-    createrepo /install/rocky8.9/x86_64
-    createrepo /install/repo/custom_repo
-    createrepo /install/post/otherpkgs/rocky8.9/x86_64
-    ```
-
-
-1. **Copy the ISO manually** somewhere else, e.g.:
-
-    ```bash
-    mount -o loop /path/to/new.iso /mnt
-    rsync -a /mnt/ /install/rocky9.3-x86_64-custom/
-    umount /mnt
-
-    ```
-
-2. **Define a new osimage** pointing to this custom path:
-
-    ```bash
-    mkdef -t osimage rocky9.3-custom-x86_64 \
-        osvers=rocky9.3 \
-        osarch=x86_64 \
-        provmethod=install \
-        profile=compute \
-        osdistroname=rocky9.3-x86_64-custom
-
-    ```
-
-
-That way, you’ll have **two separate install trees** and xCAT won’t overwrite the first one.
-
-# if the root space is Full
-
-### Step 1: Create a directory under `/home`
-
-```bash
-mkdir /home/xcat-install
-
-```
-
----
-
-### Step 2: Mount ISO into `/mnt` (already done, but let’s be sure)
-
-```bash
-umount /mnt   # if still mounted
-mount -o loop /tmp/Rocky-8.9-x86_64-dvd1.iso /mnt
-
-```
-
----
-
-### Step 3: Copy ISO contents into `/home/xcat-install`
-
-```bash
-rsync -a /mnt/ /home/xcat-install/rocky8.9-x86_64-slurm/
-
-```
-
----
-
-### Step 4: Tell xCAT about this path
-
-When you define the osimage, set its `osdistroname` to match the new directory name:
-
-```bash
-mkdef -t osimage rocky8.9-slurm-x86_64 \
-    osvers=rocky8.9 \
-    osarch=x86_64 \
-    provmethod=install \
-    profile=compute \
-    osdistroname=rocky8.9-x86_64-slurm
-```
-
-Then in `linuxdistro` table, point it to the `/home/xcat-install/...` path:
-
-```bash
-chdef -t osdistro rocky8.9-x86_64-slurm dir=/home/install/rocky8.9-x86_64-slurm
-```
-
-#
-
-# (Under Testing) Enable the compute node to access the internet:
-
-## Enable IP Forwarding on PC1
-
-Edit sysctl:
-
-```jsx
-sudo nano /etc/sysctl.conf
-```
-
-Uncomment or add:
-
-```jsx
-net.ipv4.ip_forward = 1
-```
-
-Apply immediately:
-
-```jsx
-sudo sysctl -p
-```
-
-nodeset cn1 osimage=rocky8.9-x86_64-install-compute
-
-## Assign IP Addresses
-
-### On PC1 (internal NIC → PC2) :
-
-```jsx
-sudo nmcli con mod ens37 ipv4.addresses 192.168.10.1/24
-sudo nmcli con mod ens37 ipv4.method manual
-sudo nmcli con up ens37
-```
-
-### On PC2 :
-
-```jsx
-sudo nmcli con mod ens33 ipv4.addresses 192.168.10.2/24
-sudo nmcli con mod ens33 ipv4.gateway 192.168.10.1
-sudo nmcli con mod ens33 ipv4.dns 8.8.8.8
-sudo nmcli con mod ens33 ipv4.method manual
-sudo nmcli con up ens33
-
-```
-
-## Adding NAT rule with iptables:
-
-### On PC1 , run :
-
-```jsx
-# Replace enp0s31f6 with the NIC connected to Internet
-sudo iptables -t nat -A POSTROUTING -o enp0s31f6 -j MASQUERADE
-
-# Allow forwarding
-sudo iptables -A FORWARD -i enp0s31f6 -o enp5s0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -A FORWARD -i enp5s0 -o enp0s31f6 -j ACCEPT
-```
-
-<aside>
-💡
-
-enp0s31f6 → your Internet NIC
-
-enp5s0 (example) → your internal NIC to PC2 (replace with actual name)
-
-</aside>
-
-sudo systemctl edit --full httpd
-
-rm /etc/systemd/system/httpd.service.d/ipa.conf
-rm /usr/lib/systemd/system/httpd.service.d/ipa.conf
-
-sudo systemctl daemon-reload
-sudo systemctl restart httpd
-
-sudo systemctl unmask named
-
-xcatconfig -m
-
-mkdef -t node -o cn1 ip=10.53.90.91 mac=c8:d9:d2:2b:ca:71 netboot=xnba groups=all
-
-chdef -t site extntpservers=10.53.135.135
-
-nslookup [xcatmn.cluster.com](http://xcatmn.cluster.com/)
-218  nslookup 20.20.20.1
-
-watch -n 1 "systemctl status dhcpd”
-chtab key=system passwd.username=root passwd.password=admin
-
-xcatprobe osdeploy -n cn1
-
-postscripts=syslog,remoteshell,syncfiles
-
-/opt/xcat/share/xcat/install/rocky/compute.rocky8.pkglist
-
-chdef -t osimage rocky8.9-x86_64-install-compute otherpkgdir="/install/repo/custom_repo , /install/post/otherpkgs/rocky8.9/x86_64”
-
-chdef -t osimage rocky8.9-x86_64-install-compute otherpkglist=/install/custom.pkglist
-
-/install/postscripts/mypkgs.sh

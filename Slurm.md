@@ -15,19 +15,9 @@ groupadd -g $SlurmUSER slurm
 useradd  -m -c "Slurm workload manager" -d /var/lib/slurm -u $SlurmUSER -g slurm  -s /bin/bash slurm
 ```
 
-<aside>
-💡
-
 **Very important:  Avoid UID and GID values below 1000**, as defined in the standard configuration file `/etc/login.defs` by the parameters `UID_MIN, UID_MAX, GID_MIN, GID_MAX`
 
-</aside>
-
-<aside>
-🚨
-
 Important: Make sure that these same users are created identically on all nodes. User/group creation must be done prior to installing RPMs (which would create random UID/GID pairs if these users don’t exist).
-
-</aside>
 
 ---
 
@@ -53,7 +43,7 @@ dnf install ~/rpmbuild/RPMS/x86_64/munge-0.5.16-*.rpm \
 
 to test munge run these:
 
-```jsx
+```bash
 munge -C
 munge -M
 ```
@@ -71,7 +61,7 @@ mungekey --create --verbose
 
 ```bash
 mkdir /etc/munge
-mkdir /var/log/munge/  
+mkdir /var/log/munge/
 ```
 
 on MN
@@ -84,7 +74,7 @@ Make sure to set the correct ownership and mode on all nodes:
 
 ```bash
 chown -R munge: /etc/munge/ /var/log/munge/
-chmod 0700 /etc/munge/ /var/log/munge/    
+chmod 0700 /etc/munge/ /var/log/munge/
 ```
 
 ---
@@ -93,7 +83,7 @@ chmod 0700 /etc/munge/ /var/log/munge/
 
 restart the munge service:
 
-```jsx
+```bash
 systemctl daemon-reload
 systemctl restart munge
 ```
@@ -146,23 +136,18 @@ rpmbuild -ta slurm-$VER.tar.bz2 --with mysql
 dnf install mariadb-server mariadb-devel
 ```
 
-<aside>
-💡
-
 If you plan to use [Ansible](https://www.ansible.com/) to manage the database, it will require this Python package:
 
-```jsx
+```bash
 dnf install python3-mysql (EL8)
 dnf install python3-PyMySQL (EL9)
 ```
-
-</aside>
 
 ### Install slurmdbd package
 
 Install the slurm database RPM on the database-only (slurmdbd service) node:
 
-```jsx
+```bash
 export VER=24.11.6  # Use the latest version
 cd ~/rpmbuild/RPMS/x86_64/
 dnf install slurm-$VER*rpm slurm-devel-$VER*rpm slurm-slurmdbd-$VER*rpm
@@ -191,10 +176,7 @@ systemctl enable mariadb
 systemctl status mariadb
 ```
 
-<aside>
-💡
-
-if get get the next error `Sep 29 15:53:11 [xcatmn.cluster.com](http://xcatmn.cluster.com/) systemd[1]: Failed to start MariaDB 10.3 database server.`                 
+if get get the next error `Sep 29 15:53:11 [xcatmn.cluster.com](http://xcatmn.cluster.com/) systemd[1]: Failed to start MariaDB 10.3 database server.`
 
 ```bash
 ps aux | grep -iE 'mysql|mariadb'
@@ -207,23 +189,16 @@ systemctl start mariadb
 systemctl status mariadb
 ```
 
-</aside>
-
-<aside>
-💡
-
 Make sure to configure the [MariaDB](https://mariadb.org/) database’s **root password** as instructed at first invocation of the *mariadb* service, or run this command:
 
-</aside>
-
-```jsx
+```bash
 /usr/bin/mysql_secure_installation
 ```
 
 To enter MariaDB shell run:
 
 ```bash
-mysql -u root -p  
+mysql -u root -p
 ```
 
 To create a new db user in the database run :
@@ -249,7 +224,7 @@ quit;
 create a new file `/etc/my.cnf.d/innodb.cnf` :
 
 ```bash
- nano /etc/my.cnf.d/innodb.cnf  
+ nano /etc/my.cnf.d/innodb.cnf
 ```
 
 and put these:
@@ -303,7 +278,7 @@ nano /etc/slurm/slurmdbd.conf
 
       and put these inside:
 
-```jsx
+```bash
 #
 # Slurm Database Daemon (slurmdbd) Configuration
 #
@@ -380,7 +355,7 @@ Important: Make sure that these same users are created identically on all nodes.
 ```bash
 export VER=24.11.6
 dnf install slurm-$VER*rpm slurm-devel-$VER*rpm slurm-perlapi-$VER*rpm slurm-torque-$VER*rpm slurm-example-configs-$VER*rpm
-dnf install slurm-slurmctld-24.11.6-1.el8.x86_64.rpm  
+dnf install slurm-slurmctld-24.11.6-1.el8.x86_64.rpm
 systemctl enable slurmctld
 ```
 
@@ -401,11 +376,10 @@ chown slurm: /var/log/slurm/slurmctld.log
 ```
 
 - Servers which should offer slurmrestd should install also this package:
-    
+
     ```bash
     dnf install slurm-slurmrestd-$VER*rpm
     ```
-    
 
 ## On CN:
 
@@ -443,7 +417,7 @@ nano /etc/slurm/slurm.conf
 ```
 
 - old
-    
+
     ```bash
     #
     # Sample /etc/slurm.conf for mcr.llnl.gov
@@ -453,7 +427,7 @@ nano /etc/slurm/slurm.conf
     #
     ClusterName=cluster
     #ControlMachine=xcatmn.cluster.com
-    
+
     AuthType=auth/munge
     #Epilog=/usr/local/slurm/etc/epilog
     JobCompLoc=/var/tmp/jette/slurm.job.log
@@ -470,7 +444,7 @@ nano /etc/slurm/slurm.conf
     SlurmdTimeout=300
     StateSaveLocation=/var/spool/slurm.state
     TreeWidth=16
-    # 
+    #
     SlurmctldLogFile=/var/log/slurm/slurmctld.log
     SlurmdLogFile=/var/log/slurm/slurmd.log
     SlurmSchedLogFile=/var/log/slurm/slurmsched.log
@@ -486,9 +460,8 @@ nano /etc/slurm/slurm.conf
     PartitionName=DEFAULT State=UP
     PartitionName=pdebug Nodes=cn1 MaxTime=30 MaxNodes=32 Default=YES
     PartitionName=pbatch Nodes=cn1
-    
+
     ```
-    
 
 ```bash
 # ====================================================================
@@ -573,7 +546,7 @@ chdef -t osimage rocky8.9-x86_64-install-compute synclists=/install/custom.syncl
 
 create a script file for the job:
 
-```jsx
+```bash
 #!/bin/bash
 #SBATCH --job-name=test
 #SBATCH --nodes=1
@@ -591,7 +564,7 @@ echo $SLURM_TASKS_PER_NODE  > output2.txt
 
 then run these:
 
-```jsx
+```bash
 sbatch test.sh
 squeue               # check if the node entered the queue
 cat output2.txt      # check the output file
@@ -638,7 +611,7 @@ systemctl enable --now slurmd
 
 ## working sacct slurm.conf (same on MN and CN)
 
-```bash
+```ini
 #
 # Sample /etc/slurm.conf for mcr.llnl.gov
 #
@@ -664,7 +637,7 @@ SlurmdSpoolDir=/var/spool/slurmd.spool
 SlurmdTimeout=300
 StateSaveLocation=/var/spool/slurm.state
 TreeWidth=16
-# 
+#
 SlurmctldLogFile=/var/log/slurm/slurmctld.log
 SlurmdLogFile=/var/log/slurm/slurmd.log
 SlurmSchedLogFile=/var/log/slurm/slurmsched.log
@@ -691,7 +664,7 @@ PartitionName=pbatch Nodes=cn1
 
 ## cleaned up:
 
-```bash
+```ini
 ClusterName=cluster
 SlurmctldHost=xcatmn.cluster.com
 
@@ -754,7 +727,7 @@ slurm-libpmi
 ## 1. install chrony
 
 ```bash
-sudo yum install -y chrony       
+sudo yum install -y chrony
 sudo systemctl enable chronyd
 sudo systemctl start chronyd
 ```
@@ -788,7 +761,7 @@ xdsh cn1 "chown munge:munge /etc/munge/munge.key && chmod 400 /etc/munge/munge.k
 ## 4. install slurm on MN
 
 ```bash
-sudo dnf install slurm slurm-slurmctld slurm-perlapi 
+sudo dnf install slurm slurm-slurmctld slurm-perlapi
 ```
 
 ## 5. install slurm for CN
@@ -804,7 +777,7 @@ xdsh cn1 "dnf -y install slurm slurm-slurmd"
 sudo mkdir -p /etc/slurm /var/spool/slurmctld /var/log/slurm
 
 # for CN
-xdsh cn1 "mkdir -p /var/spool/slurmd /var/log/slurm /etc/slurm" 
+xdsh cn1 "mkdir -p /var/spool/slurmd /var/log/slurm /etc/slurm"
 ```
 
 ## 7. make slurm configuration:
@@ -864,7 +837,7 @@ chmod 755 /var/log/slurm
 chmod 755 /var/log
 ```
 
-```bash
+```ini
 #
 # Sample /etc/slurm.conf for mcr.llnl.gov
 #
@@ -894,7 +867,7 @@ TreeWidth=16
 TaskPlugin=task/cgroup,task/affinity
 ProctrackType=proctrack/cgroup
 JobAcctGatherType=jobacct_gather/cgroup
-# 
+#
 SlurmctldLogFile=/var/log/slurm/slurmctld.log
 SlurmdLogFile=/var/log/slurm/slurmd.log
 SlurmSchedLogFile=/var/log/slurm/slurmsched.log
@@ -919,7 +892,7 @@ PartitionName=pbatch Nodes=cn1
 
 ```
 
-```bash
+```ini
 #CgroupAutomount=yes
 #CgroupMountpoint=/sys/fs/cgroup
 ConstrainCores=yes

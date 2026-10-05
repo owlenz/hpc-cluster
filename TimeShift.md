@@ -1,6 +1,6 @@
 # TimeShift
 
-## 🔹 Step 1. Install Timeshift
+## Step 1. Install Timeshift
 
 Run:
 
@@ -10,50 +10,49 @@ sudo dnf install timeshift -y
 
 ---
 
-## 🔹 Step 2. Launch Timeshift
+## Step 2. Launch Timeshift
 
 You can run it in two ways:
 
 - **CLI (terminal)**:
-    
+
     ```bash
     sudo timeshift --help
     ```
-    
+
     or
-    
+
     ```bash
     sudo timeshift --create --comments "Before Slurm"
     ```
-    
+
 - **GUI (desktop)**:
-    
+
     If you have a desktop environment installed, just run:
-    
+
     ```bash
     sudo timeshift-gtk
     ```
-    
 
 ---
 
-## 🔹 Step 3. Initial Setup (first run)
+## Step 3. Initial Setup (first run)
 
 When you first run Timeshift, it will ask:
 
 1. **Backup type** → choose **RSYNC** (since you’re on XFS, not Btrfs). It’s picked by default
 2. **Destination drive** → select a partition with enough free space (not your root, ideally another disk or big `/home`).
-    
+
     ```bash
-    sudo timeshift --snapshot-device /dev/mapper/rl-home 
+    sudo timeshift --snapshot-device /dev/mapper/rl-home
     ```
-    
+
 3. **Schedule** → you can enable daily/weekly/monthly backups.
 4. **Filters** → By default, Timeshift protects system files (not user files like documents). That’s good because you usually want system restore, not personal files.
 
 ---
 
-## 🔹 Step 4. Create a Restore Point (manual)
+## Step 4. Create a Restore Point (manual)
 
 Run:
 
@@ -78,7 +77,7 @@ sudo timeshift --restore
 
 ---
 
-## 🔹 Step 6. (Optional) Enable Scheduled Snapshots
+## Step 6. (Optional) Enable Scheduled Snapshots
 
 we will use cron jobs for this one
 

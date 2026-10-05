@@ -2,15 +2,7 @@
 
 # Step 1:  Install OS on Management Node
 
-<aside>
-👌
-
 we will Install Rocky Linux
-
-</aside>
-
-<aside>
-🚨
 
 Make sure to update the package manager first thing:
 
@@ -18,8 +10,6 @@ Make sure to update the package manager first thing:
 sudo dnf update
 sudo dnf upgrade
 ```
-
-</aside>
 
 ---
 
@@ -34,7 +24,6 @@ sudo nmtui
 ## 2. Open the Settings of Ethernet
 
 > Edit a connection —> enp0s31f6
->
 
 ## 3. Edit the Connection like the following
 
@@ -43,13 +32,9 @@ sudo nmtui
 ## 4. Back to Network Manger TUI page
 
 > OK —> Back
->
 
 ## 5. Activate a connection
 
 > Activate a connection —> Deactivate —> Activate
->
 
 ---
-
-#

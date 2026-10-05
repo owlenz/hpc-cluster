@@ -12,8 +12,8 @@ This guide sets up central identity management (FreeIPA), home directory sharing
 
 ## Phase 0: System Backup Prerequisite
 
-> 🚨 **Critical Safety Check:** Perform a Timeshift snapshot (or VM checkpoint) **after** completing xCAT network/OS setup and **before** starting FreeIPA installation. If FreeIPA installation fails during initial LDAP initialization, restoring from a clean snapshot is significantly faster than manually purging LDAP databases.
-> 
+> **Critical Safety Check:** Perform a Timeshift snapshot (or VM checkpoint) **after** completing xCAT network/OS setup and **before** starting FreeIPA installation. If FreeIPA installation fails during initial LDAP initialization, restoring from a clean snapshot is significantly faster than manually purging LDAP databases.
+>
 
 # Phase 1: xCAT Pre-Provisioning Scripts
 
@@ -25,20 +25,20 @@ This script grabs the NODE envvar assigned by xcat for each node during installa
 
 ### 1. Create a custom postscript:
 
-```jsx
+```bash
 nano /install/postscripts/setup-hostnames.sh
 ```
 
 #### and put the following in it:
 
-```jsx
+```bash
 #!/bin/bash
 hostnamectl set-hostname "$NODE"
 ```
 
 #### 2. Make it executable:
 
-```jsx
+```bash
 chmod +x /install/postscripts/set-fqdn-hostname.sh
 ```
 
@@ -46,7 +46,7 @@ chmod +x /install/postscripts/set-fqdn-hostname.sh
 
 Assign the script to your compute node group so it runs automatically upon provisioning completion:
 
-```jsx
+```bash
 chdef cn1 -p postscripts="set-fqdn-hostname.sh"
 ```
 
@@ -64,20 +64,7 @@ dnf module enable idm:DL1 -y
 dnf install freeipa-server freeipa-server-dns
 ```
 
-<aside>
-💡
-
-`idm`  
-
-👉 *“This is the modular package stream that delivers FreeIPA and its dependencies.”*
-
----
-
-By enabling `idm:DL1`, you’re saying:
-
-👉 *“Use the supported Identity Management (FreeIPA) version for this OS release.”*
-
-</aside>
+`idm` is the modular package stream that delivers FreeIPA and its dependencies.”*
 
 #### B. Execute Interactive FreeIPA Setup
 
@@ -108,32 +95,17 @@ Verify identity management operational status by obtaining an admin Kerberos Tic
 	kinit admin
 ```
 
-<aside>
-⚠️
-
-you must enter same password that you set before during configuration
-
-</aside>
-
-<aside>
-💡
+> you must enter same password that you set before during configuration
 
 **What is `kinit`?** `kinit` authenticates your user identity against the Kerberos Key Distribution Center (KDC) and retrieves an encrypted TGT ticket. This token grants administrative rights across LDAP, SSH, and automount services without requiring repeated password prompts.
 
-</aside>
-
-<aside>
-💡
-
-to show all commands that can you  use it 
+to show all commands that can you  use it
 
 ```bash
 man ipa
 ipa help topics   # to get a list of help topics
 ipa help {topic}  # to print help for chosen topic
 ```
-
-</aside>
 
 ### Step 2: Configure NFS Server for Shared Home Directories
 
@@ -188,7 +160,7 @@ systemctl restart sssd
 ```
 
 > users need to create their home directory on the master node first though
-> 
+>
 
 ---
 
@@ -201,37 +173,37 @@ To ensure compute nodes automatically join FreeIPA and configure Automount durin
 Create `/install/postscripts/freeipa.sh`:
 
 - old
-    
+
     ```bash
     #!/bin/bash
     dnf install -y vim nano htop tmux
-    
+
     ### --- Check & Install nfs-utils --- ###
     if dnf list installed nfs-utils &>/dev/null; then
         echo "[OK] nfs-utils is already installed. Skipping."
     else
         echo "[INFO] Installing nfs-utils..."
         dnf install -y nfs-utils
-    
+
         if dnf list installed nfs-utils &>/dev/null; then
             echo "[SUCCESS] nfs-utils installed successfully."
-    
+
         else
             echo "[ERROR] Failed to install nfs-utils."
             exit 1
         fi
     fi
-    
+
     ### --- Check & Install freeipa-client --- ###
     if which ipa-client-install &>/dev/null; then
         echo "[OK] freeipa-client is already installed. Skipping."
     else
         echo "[INFO] Installing freeipa-client..."
         dnf install -y freeipa-client
-    
+
         if which ipa-client-install &>/dev/null; then
             echo "[SUCCESS] freeipa-client installed successfully."
-    
+
             # Run IPA setup commands only if package was newly installed
             echo "[INFO] Running ipa-client-install..."
             ipa-client-install \
@@ -245,7 +217,7 @@ Create `/install/postscripts/freeipa.sh`:
             --mkhomedir \
             --force-join \
             --force-ntpd
-    
+
             echo "[INFO] Running ipa-client-automount..."
             ipa-client-automount --unattended --location=default
     	automount -m
@@ -254,9 +226,9 @@ Create `/install/postscripts/freeipa.sh`:
             exit 1
         fi
     fi
-    
+
     ```
-    
+
 
 ```bash
 #!/bin/bash
@@ -292,7 +264,7 @@ else
 
     echo "[INFO] Configuring FreeIPA Automount..."
     ipa-client-automount --unattended --location=default
-    
+
     # Enable mkhomedir feature on client
     authselect enable-feature with-mkhomedir
     systemctl restart sssd autofs
