@@ -1,0 +1,185 @@
+- name: packages
+  become: true
+  hosts: all
+  tasks:
+    - name: Ensure Base Packages installed
+      ansible.builtin.dnf:
+        name:
+          - vim-enhanced
+          - wget
+          - htop
+          - nfs-utils
+        state: present
+
+    - name: Enable EPEL
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+
+    - name: Change EPEL Repos to mgmt node
+      ansible.builtin.lineinfile:
+        path: /etc/yum.repos.d/epel.repo
+        regexp: '^#baseurl=https://download\.example/pub/epel/8/Everything/\$basearch'
+        line: 'baseurl=http://10.10.10.1/install/repo/custom_repo'
+        backup: true
+
+    - name: Install Lmod
+      ansible.builtin.dnf:
+        name: Lmod
+        state: present
+        update_cache: true
+
+    - name: mount /apps
+      ansible.posix.mount:
+        boot: true
+        path: /apps
+        src: xcatmn:/apps
+        fstype: nfs
+        opts: defaults
+        dump: '0'
+        passno: '0'
+        state: mounted
+
+    # - name: setup lmod
+    #   ansible.builtin.shell: |
+    #     source /etc/profile.d/modules.sh
+    #     rc=$?
+    #     if [[ $rc -ne 0 ]]; then
+    #       echo "Couldn't source modules.sh; error code: $rc" >&2
+    #       exit "$rc"
+    #     fi
+    #     module use /apps/modules/all/
+    #   args:
+    #     executable: /bin/bash
+
+    - name: setup lmod
+      ansible.builtin.copy:
+        dest: /etc/profile.d/apps-modules.sh
+        content: "export MODULEPATH=/apps/modules/all:$MODULEPATH\n"
+        mode: "0644"
+
+- name: freeipa
+  become: true
+  hosts: all
+  tasks:
+    - name: install freeipa dependancies
+      ansible.builtin.dnf:
+        name: [autofs, chrony, freeipa-client, oddjob-mkhomedir]
+        state: present
+
+    - name: setup chrony
+      ansible.builtin.copy:
+        dest: /etc/chrony.conf
+        content: |
+          server 10.10.10.1 iburst
+          driftfile /var/lib/chrony/drift
+          makestep 1.0 3
+          rtcsync
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Apply chrony changes
+
+
+    - name: ensure kerberos directory exists
+      ansible.builtin.file:
+        path: /etc/krb5.conf.d
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: freeipa setup
+      ansible.builtin.command:
+        argv:
+          - ipa-client-install
+          - --unattended
+          - --domain=cluster.com
+          - --realm=CLUSTER.COM
+          - --server=xcatmn.cluster.com
+          - --hostname={{ ansible_fqdn }}
+          - --principal=admin
+          - --password='rootroot'
+          - --mkhomedir
+          - --no-ntp
+          - --force-join
+      args:
+        creates: /etc/ipa/default.conf
+
+    - name: SSSD entry cache timeout
+      ansible.builtin.lineinfile:
+        path: /etc/sssd/sssd.conf
+        regexp: '^#?\s*entry_cache_timeout\s*='
+        line: 'entry_cache_timeout = 10'
+        insertafter: '^\[domain/cluster\.com\]'
+      notify: flush sssd cache
+
+    - name: SSSD entry cache nowait percentage
+      ansible.builtin.lineinfile:
+        path: /etc/sssd/sssd.conf
+        regexp: '^#?\s*entry_cache_nowait_percentage\s*='
+        line: 'entry_cache_nowait_percentage = 0'
+        insertafter: '^\[domain/cluster\.com\]'
+      notify: flush sssd cache
+
+    - name: SSSD negative cache timeout
+      ansible.builtin.lineinfile:
+        path: /etc/sssd/sssd.conf
+        regexp: '^#?\s*negative_timeout\s*='
+        line: 'negative_timeout = 5'
+        insertafter: '^\[sssd\]'
+      notify: flush sssd cache
+
+    - name: Reduce autofs umount timeout
+      ansible.builtin.lineinfile:
+        path: /etc/autofs.conf
+        regexp: '^#?timeout.*'
+        line: 'timeout = 60'
+        insertafter: '^\[ autofs \]'
+        backup: true
+      notify: flush sssd cache
+
+    - name: enable oddjob
+      ansible.builtin.systemd:
+        name: oddjobd
+        enabled: true
+        state: restarted
+
+  handlers:
+    - name: Restart chronyd
+      ansible.builtin.service:
+        name: chronyd
+        enabled: true
+        state: restarted
+      listen: Apply chrony changes
+
+    - name: Reselect chrony source
+      ansible.builtin.command:
+        cmd: chronyc reselect
+      failed_when: false
+      listen: Apply chrony changes
+
+    - name: Step chrony clock
+      ansible.builtin.command:
+        cmd: chronyc makestep
+      failed_when: false
+      listen: Apply chrony changes
+
+    - name: stop autofs and sssd
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+      loop: [autofs, sssd]
+      listen: flush sssd cache
+
+    - name: delete cache
+      ansible.builtin.shell: rm -rf /var/lib/sss/db/* /var/lib/sss/mc/*
+      listen: flush sssd cache
+
+    - name: Start sssd and autofs
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop: [sssd, autofs]
+      listen: flush sssd cache

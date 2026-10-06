@@ -6,12 +6,10 @@
 
 [xCAT](./xCAT.md)
 
-[FreeIPA](./FreeIPA.md)
-
 [TimeShift](./TimeShift.md)
 
 [FreeIPA](./FreeIPA.md)
 
-[Slurm](./Slurm.md)
-
 [EasyBuild](./EasyBuild.md)
+
+[Slurm](./Slurm.md)
