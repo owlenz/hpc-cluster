@@ -1,10 +1,9 @@
 {
-  description = "Dev Environmnet flake";
+  description = "hpc-cluster dev env flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
   };
-
   outputs =
     { nixpkgs, ... }:
     let
@@ -13,7 +12,6 @@
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        name = "go-dev";
         buildInputs = with pkgs; [
           ansible
         ];

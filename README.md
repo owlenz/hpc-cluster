@@ -1,16 +1,16 @@
-# 🌐 HPC Cluster
+# HPC Cluster
 
 > A documentation repository for building and managing a High-Performance Computing (HPC) cluster.
 
 ---
 
-## 📖 Overview
+## Overview
 
 This repository contains detailed guides and documentation covering every stage of setting up an HPC cluster — from pre-provisioning and networking to job scheduling and software management.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | # | Document | Description |
 |---|----------|-------------|
@@ -24,7 +24,7 @@ This repository contains detailed guides and documentation covering every stage 
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ![Rocky Linux](https://img.shields.io/badge/Rocky_Linux-10B981?style=flat-square&logo=rockylinux&logoColor=white)
 ![Slurm](https://img.shields.io/badge/Slurm-4A90E2?style=flat-square)
@@ -33,3 +33,9 @@ This repository contains detailed guides and documentation covering every stage 
 ![EasyBuild](https://img.shields.io/badge/EasyBuild-2C3E50?style=flat-square)
 
 ---
+
+## Roadmap
+
+- [ ] integrate ansible fully
+- [ ] ci/cd workflows
+- [ ] monitoring
